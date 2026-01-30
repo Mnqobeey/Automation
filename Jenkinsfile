@@ -58,7 +58,7 @@ pipeline {
         success {
             echo 'Tests completed successfully!'
             emailext (
-                subject: "✅ BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: "The build ${env.JOB_NAME} #${env.BUILD_NUMBER} passed successfully.\n\nCheck console output at: ${env.BUILD_URL}",
                 to: 'team@example.com',
                 attachLog: false
@@ -67,7 +67,7 @@ pipeline {
         failure {
             echo 'Tests failed!'
             emailext (
-                subject: "❌ BUILD FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                subject: "BUILD FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: "The build ${env.JOB_NAME} #${env.BUILD_NUMBER} failed.\n\nCheck console output at: ${env.BUILD_URL}",
                 to: 'team@example.com',
                 attachLog: true
