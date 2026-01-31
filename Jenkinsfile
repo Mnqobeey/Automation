@@ -11,6 +11,8 @@ pipeline {
         string(name: 'ENVIRONMENT', defaultValue: 'qa', description: 'Environment to run tests against')
     }
 
+    
+
     stages {
         stage('Checkout') {
             steps {
@@ -46,7 +48,15 @@ pipeline {
                 """
             }
         }
-    }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('My SonarQube Server') {
+                    sh 'mvn clean verify sonar:sonar' 
+                }
+            }
+
+        }
 
     post {
         always {
