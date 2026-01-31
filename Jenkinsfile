@@ -16,6 +16,8 @@ pipeline {
         SONAR_PROJECT_NAME = 'SMS Cucumber Automation'
     }
 
+    
+
     stages {
         stage('Checkout') {
             steps {
@@ -79,6 +81,7 @@ pipeline {
             }
         }
 
+<<<<<<< HEAD
         stage('Docker Build') {
             steps {
                 script {
@@ -88,6 +91,17 @@ pipeline {
             }
         }
     }
+=======
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('My SonarQube Server') {
+                    sh 'mvn sonar:sonar'
+
+                }
+            }
+
+        }
+>>>>>>> 803b7260ae444aa4e4c4c2a96e4c209c3c53debc
 
     post {
         always {
@@ -100,9 +114,15 @@ pipeline {
         success {
             echo 'Pipeline Succeeded!'
             emailext (
+<<<<<<< HEAD
                 subject: "SUCCESS: Pipeline '${env.JOB_NAME}' #${env.BUILD_NUMBER}",
                 body: "All stages passed. View details: ${env.BUILD_URL}",
                 to: 'thandoomntamboo@gmail.com', 
+=======
+                subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "The build ${env.JOB_NAME} #${env.BUILD_NUMBER} passed successfully.\n\nCheck console output at: ${env.BUILD_URL}",
+                to: 'team@example.com',
+>>>>>>> 803b7260ae444aa4e4c4c2a96e4c209c3c53debc
                 attachLog: false
             )
         }
@@ -217,6 +237,7 @@ pipeline {
         success {
             echo 'Pipeline Succeeded!'
             emailext (
+<<<<<<< HEAD
                 subject: "SUCCESS: Pipeline '${env.JOB_NAME}' #${env.BUILD_NUMBER}",
                 body: "All stages passed. View details: ${env.BUILD_URL}",
                 to: 'thandoomntamboo@gmail.com', // Your email
@@ -229,6 +250,11 @@ pipeline {
                 subject: "FAILURE: Pipeline '${env.JOB_NAME}' #${env.BUILD_NUMBER}",
                 body: "Pipeline failed. Check the logs: ${env.BUILD_URL}",
                 to: 'thandoomntamboo@gmail.com', // Your email
+=======
+                subject: "BUILD FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "The build ${env.JOB_NAME} #${env.BUILD_NUMBER} failed.\n\nCheck console output at: ${env.BUILD_URL}",
+                to: 'team@example.com',
+>>>>>>> 803b7260ae444aa4e4c4c2a96e4c209c3c53debc
                 attachLog: true
             )
         }
