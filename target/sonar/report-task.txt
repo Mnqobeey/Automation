@@ -1,0 +1,6 @@
+projectKey=smsc-cucumber-automation
+serverUrl=http://localhost:9000
+serverVersion=26.1.0.118079
+dashboardUrl=http://localhost:9000/dashboard?id=smsc-cucumber-automation
+ceTaskId=581c0750-1b8d-49d7-abfa-aff869c6e845
+ceTaskUrl=http://localhost:9000/api/ce/task?id=581c0750-1b8d-49d7-abfa-aff869c6e845
