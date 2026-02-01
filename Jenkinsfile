@@ -4,7 +4,6 @@ pipeline {
     options {
         timeout(time: 60, unit: 'MINUTES')
         disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '30'))
     }
     
     triggers {
@@ -13,25 +12,15 @@ pipeline {
     
     parameters {
         choice(
-            name: 'DEPLOY_ENVIRONMENT',
+            name: 'DEPLOY_ENV',
             choices: ['dev', 'staging', 'production'],
-            description: 'Select deployment environment'
-        )
-        booleanParam(
-            name: 'RUN_INTEGRATION_TESTS',
-            defaultValue: true,
-            description: 'Run integration tests'
-        )
-        booleanParam(
-            name: 'RUN_PERFORMANCE_TESTS',
-            defaultValue: false,
-            description: 'Run performance tests'
+            description: 'Deployment environment'
         )
     }
     
     environment {
-        ARTIFACT_VERSION = "${env.BUILD_NUMBER}"
-        DEPLOY_TARGET = "${params.DEPLOY_ENVIRONMENT}"
+        PROJECT_NAME = 'Automation'
+        VERSION = "1.0.${env.BUILD_NUMBER}"
     }
     
     stages {
@@ -48,174 +37,115 @@ pipeline {
                 ])
             }
         }
-        
-        stage('Initialize') {
-            steps {
-                script {
-                    echo "Starting build #${env.BUILD_NUMBER}"
-                    echo "Deploying to: ${DEPLOY_TARGET}"
-                    echo "Workspace: ${env.WORKSPACE}"
-                }
-            }
-        }
-        
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                    echo "Installing dependencies..."
-                    # Example: npm install or pip install or mvn dependency:resolve
-                    # npm ci --only=production
-                    # or
-                    # pip install -r requirements.txt
-                '''
-            }
-        }
-        
+
         stage('Build') {
             steps {
-                sh '''
-                    echo "Building application..."
-                    # Example build commands:
-                    # mvn clean compile
-                    # gradle build
-                    # docker build -t myapp:$ARTIFACT_VERSION .
-                '''
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: '**/target/*.jar,**/dist/*.zip', fingerprint: true
+                script {
+                    // Check what type of project this is
+                    if (fileExists('pom.xml')) {
+                        echo 'Maven project detected'
+                        sh 'mvn clean compile'
+                    } else if (fileExists('package.json')) {
+                        echo 'Node.js project detected'
+                        sh 'npm install'
+                        sh 'npm run build'
+                    } else if (fileExists('requirements.txt')) {
+                        echo 'Python project detected'
+                        sh 'pip install -r requirements.txt'
+                    } else {
+                        echo 'Unknown project type, running generic build'
+                        sh 'echo "Building application..."'
+                    }
                 }
             }
         }
-        
-        stage('Unit Tests') {
+
+        stage('Test') {
             steps {
-                sh '''
-                    echo "Running unit tests..."
-                    # Example: mvn test or npm test
-                    # mvn test
-                '''
+                script {
+                    if (fileExists('pom.xml')) {
+                        sh 'mvn test'
+                    } else if (fileExists('package.json')) {
+                        sh 'npm test'
+                    } else {
+                        sh 'echo "No specific test command found"'
+                    }
+                }
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml, **/test-results/*.xml'
+                    junit '**/target/surefire-reports/*.xml'
                 }
             }
         }
         
-        stage('Integration Tests') {
-            when {
-                expression { params.RUN_INTEGRATION_TESTS == true }
-            }
-            steps {
-                sh '''
-                    echo "Running integration tests..."
-                    # Example: mvn verify or specific integration test command
-                '''
-            }
-        }
-        
-        stage('Code Quality') {
+        stage('Quality Checks') {
             steps {
                 script {
-                    echo "Running code quality checks..."
-                    // SonarQube analysis (if configured)
-                    // withSonarQubeEnv('SonarQube') {
-                    //     sh 'mvn sonar:sonar'
-                    // }
-                }
-            }
-        }
-        
-        stage('Security Scan') {
-            steps {
-                sh '''
-                    echo "Running security scans..."
-                    # Example: OWASP dependency check
-                    # mvn org.owasp:dependency-check-maven:check
-                '''
-            }
-        }
-        
-        stage('Performance Tests') {
-            when {
-                expression { params.RUN_PERFORMANCE_TESTS == true }
-            }
-            steps {
-                sh '''
-                    echo "Running performance tests..."
-                    # Example: JMeter or Gatling tests
-                '''
-            }
-        }
-        
-        stage('Package Artifact') {
-            steps {
-                sh '''
-                    echo "Packaging final artifact..."
-                    # Example: mvn package or create docker image
-                    # mvn package -DskipTests
-                    # docker tag myapp:$ARTIFACT_VERSION registry/myapp:$ARTIFACT_VERSION
-                '''
-            }
-        }
-        
-        stage('Deploy to Environment') {
-            when {
-                expression { params.DEPLOY_ENVIRONMENT != 'none' }
-            }
-            steps {
-                script {
-                    echo "Deploying to ${DEPLOY_TARGET} environment"
+                    echo "Running quality checks..."
                     
-                    switch(DEPLOY_TARGET) {
-                        case 'dev':
-                            sh './deploy-dev.sh'
-                            break
-                        case 'staging':
-                            sh './deploy-staging.sh'
-                            break
-                        case 'production':
-                            // Typically requires approval
-                            echo "Production deployment requires manual approval"
-                            break
+                    // Code linting
+                    if (fileExists('package.json')) {
+                        sh 'npm run lint || true'  // Continue even if linting fails
+                    }
+                    
+                    // Security scanning
+                    if (fileExists('package.json')) {
+                        sh 'npm audit || true'
                     }
                 }
             }
         }
         
-        stage('Post-Deployment Verification') {
+        stage('Package') {
+            steps {
+                script {
+                    if (fileExists('pom.xml')) {
+                        sh 'mvn package -DskipTests'
+                        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                    } else if (fileExists('package.json')) {
+                        sh 'npm run package || true'
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy') {
             when {
-                expression { params.DEPLOY_ENVIRONMENT != 'none' }
+                expression { params.DEPLOY_ENV != null }
             }
             steps {
-                sh '''
-                    echo "Verifying deployment..."
-                    # Example: health check, smoke tests
-                    # curl -f http://app-url/health
-                '''
+                script {
+                    echo "Deploying to ${params.DEPLOY_ENV}"
+                    
+                    // Based on the project type, deploy appropriately
+                    if (fileExists('deploy.sh')) {
+                        sh "./deploy.sh ${params.DEPLOY_ENV}"
+                    } else if (fileExists('docker-compose.yml')) {
+                        sh "docker-compose -f docker-compose.${params.DEPLOY_ENV}.yml up -d"
+                    } else {
+                        echo "No deployment script found for ${params.DEPLOY_ENV}"
+                    }
+                }
             }
         }
     }
     
     post {
         always {
-            echo "Build #${env.BUILD_NUMBER} completed"
-            // Clean up workspace if needed
-            // cleanWs()
+            echo "Build ${env.BUILD_NUMBER} completed"
+            // Clean workspace
+            cleanWs()
         }
         success {
-            echo "Pipeline succeeded! ✅"
-            // Optional: Send success notification
-            // slackSend(color: 'good', message: "Build ${env.BUILD_NUMBER} succeeded")
+            echo "✅ Pipeline succeeded"
+            // Optional notifications
+            // slackSend(message: "Build ${env.BUILD_NUMBER} succeeded")
         }
         failure {
-            echo "Pipeline failed! ❌"
-            // Optional: Send failure notification
-            // slackSend(color: 'danger', message: "Build ${env.BUILD_NUMBER} failed")
-        }
-        unstable {
-            echo "Pipeline completed with unstable status"
+            echo "❌ Pipeline failed"
+            // Optional notifications
+            // slackSend(message: "Build ${env.BUILD_NUMBER} failed")
         }
     }
 }
