@@ -1,6 +1,11 @@
 pipeline {
     agent any
     
+    tools {
+        // This ensures ALL stages use JDK 17
+        jdk 'jdk17'
+    }
+    
     options {
         timeout(time: 15, unit: 'MINUTES')
         disableConcurrentBuilds()
@@ -137,6 +142,45 @@ pipeline {
                     if (fileExists('package.json') && sh(script: 'npm audit --help >/dev/null 2>&1', returnStatus: true) == 0) {
                         sh 'npm audit || true'  // Don't fail on audit warnings
                     }
+                }
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    echo "Running SonarQube analysis..."
+                    
+                    // Detect project type and run appropriate SonarQube scanner
+                    if (fileExists('pom.xml')) {
+                        // For Maven projects
+                        withSonarQubeEnv('SonarQube') { // Make sure 'SonarQube' matches your Jenkins server config name
+                            sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=Automation -Dsonar.projectName="Automation"'
+                        }
+                    } else if (fileExists('package.json')) {
+                        // For Node.js projects
+                        withSonarQubeEnv('SonarQube') {
+                            sh 'sonar-scanner -Dsonar.projectKey=Automation -Dsonar.projectName="Automation"'
+                        }
+                    } else if (fileExists('build.gradle')) {
+                        // For Gradle projects
+                        withSonarQubeEnv('SonarQube') {
+                            sh './gradlew sonarqube -Dsonar.projectKey=Automation -Dsonar.projectName="Automation"'
+                        }
+                    } else {
+                        echo "No supported project type detected for SonarQube analysis"
+                    }
+                }
+            }
+            
+            post {
+                success {
+                    echo "SonarQube analysis completed successfully"
+                    // You could add a wait for quality gate here if needed
+                    // waitForQualityGate abortPipeline: true
+                }
+                failure {
+                    echo "SonarQube analysis failed"
                 }
             }
         }
