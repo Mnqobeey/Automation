@@ -2,9 +2,9 @@ pipeline {
     agent any
     
     tools {
-        // This ensures ALL stages use JDK 17 and maven 3.9.8 (stable)
-        jdk 'jdk17'
-        maven-3.9
+        // CORRECTED: Use 'toolName "installName"' syntax
+        jdk 'jdk17' // 'jdk17' is the name you configured in Jenkins
+        maven 'maven-3.9' // 'maven-3.9' is the name you configured in Jenkins
     }
     
     options {
@@ -14,11 +14,14 @@ pipeline {
     }
     
     triggers {
-        githubPush()
+        // FIXED: Use a valid trigger.
+        // 'githubPush' is not valid. Use 'pollSCM' for periodic checks or
+        // configure the GitHub webhook in your Jenkins job settings instead.
+        pollSCM('H/5 * * * *') // Example: Poll every 5 minutes. Remove if using webhooks.
     }
     
     environment {
-        GIT_COMMIT_SHORT = "${env.GIT_COMMIT.take(8)}"
+        GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
         BUILD_TIMESTAMP = new Date().format("yyyyMMdd-HHmmss")
         ARTIFACT_NAME = "automation-build-${env.BUILD_NUMBER}.jar"
     }
@@ -35,18 +38,20 @@ pipeline {
                     ],
                     userRemoteConfigs: [[
                         url: 'https://github.com/Mnqobeey/Automation.git',
+                        // Ensure 'github-token' credential exists in Jenkins
                         credentialsId: 'github-token'
                     ]]
                 ])
                 
                 script {
-                    // Get commit info
-                    sh '''
-                        echo "Git Commit: ${GIT_COMMIT}"
+                    // FIXED: Use double quotes for Groovy string interpolation.
+                    // Single quotes in sh block prevent variable expansion.
+                    sh """
+                        echo "Git Commit: ${env.GIT_COMMIT}"
                         echo "Git Branch: main"
-                        echo "Commit Author: $(git log -1 --pretty=format:'%an')"
-                        echo "Commit Message: $(git log -1 --pretty=format:'%s')"
-                    '''
+                        echo "Commit Author: \$(git log -1 --pretty=format:'%an')"
+                        echo "Commit Message: \$(git log -1 --pretty=format:'%s')"
+                    """
                 }
             }
         }
@@ -56,7 +61,6 @@ pipeline {
                 script {
                     echo "Building Automation project..."
                     
-                    // Detect project type and build
                     if (fileExists('pom.xml')) {
                         echo "Maven project detected"
                         sh 'mvn clean compile -DskipTests'
@@ -79,7 +83,6 @@ pipeline {
             post {
                 success {
                     echo "Build completed successfully"
-                    // Archive artifacts if they exist
                     script {
                         if (fileExists('target/*.jar')) {
                             archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
@@ -105,7 +108,6 @@ pipeline {
                     } else if (fileExists('build.gradle')) {
                         sh 'gradle test'
                     } else if (fileExists('tests/')) {
-                        // Generic test execution
                         sh 'python -m pytest tests/ || true'
                     } else {
                         echo "No test configuration found - skipping tests"
@@ -115,7 +117,6 @@ pipeline {
             
             post {
                 always {
-                    // Collect test results if they exist
                     script {
                         if (fileExists('target/surefire-reports/*.xml')) {
                             junit 'target/surefire-reports/*.xml'
@@ -134,14 +135,12 @@ pipeline {
                 script {
                     echo "Running quality checks..."
                     
-                    // Run linting if configured
                     if (fileExists('package.json') && sh(script: 'npm run lint -- --help >/dev/null 2>&1', returnStatus: true) == 0) {
                         sh 'npm run lint'
                     }
                     
-                    // Run security checks if available
                     if (fileExists('package.json') && sh(script: 'npm audit --help >/dev/null 2>&1', returnStatus: true) == 0) {
-                        sh 'npm audit || true'  // Don't fail on audit warnings
+                        sh 'npm audit || true'
                     }
                 }
             }
@@ -152,35 +151,35 @@ pipeline {
                 script {
                     echo "Running SonarQube analysis..."
                     
-                    // Detect project type and run appropriate SonarQube scanner
+                    // NOTE: The `withSonarQubeEnv` block is required.
+                    // Ensure 'SonarQube' matches your Jenkins server config name.
                     if (fileExists('pom.xml')) {
-                        // For Maven projects
-                        withSonarQubeEnv('SonarQube') { // Make sure 'SonarQube' matches your Jenkins server config name
+                        withSonarQubeEnv('SonarQube') {
                             sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=Automation -Dsonar.projectName="Automation"'
                         }
                     } else if (fileExists('package.json')) {
-                        // For Node.js projects
                         withSonarQubeEnv('SonarQube') {
                             sh 'sonar-scanner -Dsonar.projectKey=Automation -Dsonar.projectName="Automation"'
                         }
                     } else if (fileExists('build.gradle')) {
-                        // For Gradle projects
                         withSonarQubeEnv('SonarQube') {
                             sh './gradlew sonarqube -Dsonar.projectKey=Automation -Dsonar.projectName="Automation"'
                         }
                     } else {
                         echo "No supported project type detected for SonarQube analysis"
                     }
-                    
-                    // This waits for SonarQube to process the analysis and check the Quality Gate
-                    timeout(time: 15, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
                 }
             }
             
             post {
                 success {
+                    // FIXED: Moved the quality gate check to the POST success block.
+                    // It should run AFTER the analysis step succeeds.
+                    script {
+                        timeout(time: 15, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
                     echo "SonarQube analysis completed successfully"
                 }
                 failure {
@@ -217,13 +216,6 @@ pipeline {
             steps {
                 script {
                     echo "Deploying application..."
-                    
-                    // Add your deployment logic here
-                    // Example:
-                    // sh './deploy.sh'
-                    // or
-                    // sh 'docker push your-registry/automation:${GIT_COMMIT_SHORT}'
-                    
                     echo "Deployment completed (simulated)"
                 }
             }
@@ -237,44 +229,27 @@ pipeline {
                 echo "Build Number: ${env.BUILD_NUMBER}"
                 echo "Status: ${currentBuild.currentResult}"
                 echo "Duration: ${currentBuild.durationString}"
-                echo "Commit: ${GIT_COMMIT_SHORT}"
+                echo "Commit: ${env.GIT_COMMIT_SHORT}"
                 echo "========================="
                 
-                // Update build description
-                currentBuild.description = "Commit: ${GIT_COMMIT_SHORT}"
+                currentBuild.description = "Commit: ${env.GIT_COMMIT_SHORT}"
             }
         }
         
         success {
             script {
                 echo "Pipeline completed successfully!"
-                
-                // Send success notification (optional)
-                // emailext(
-                //     subject: "SUCCESS: Automation Build #${env.BUILD_NUMBER}",
-                //     body: "Build completed successfully\nCommit: ${GIT_COMMIT_SHORT}",
-                //     to: 'your-email@example.com'
-                // )
             }
         }
         
         failure {
             script {
                 echo "Pipeline failed!"
-                
-                // Send failure notification (optional)
-                // emailext(
-                //     subject: "FAILED: Automation Build #${env.BUILD_NUMBER}",
-                //     body: "Build failed\nCheck logs: ${env.BUILD_URL}",
-                //     to: 'your-email@example.com'
-                // )
             }
         }
         
         cleanup {
             echo "Cleaning up workspace..."
-            // Optional: Delete workspace after build
-            // cleanWs()
         }
     }
 }
