@@ -170,14 +170,17 @@ pipeline {
                     } else {
                         echo "No supported project type detected for SonarQube analysis"
                     }
+                    
+                    // This waits for SonarQube to process the analysis and check the Quality Gate
+                    timeout(time: 15, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
                 }
             }
             
             post {
                 success {
                     echo "SonarQube analysis completed successfully"
-                    // You could add a wait for quality gate here if needed
-                    // waitForQualityGate abortPipeline: true
                 }
                 failure {
                     echo "SonarQube analysis failed"
