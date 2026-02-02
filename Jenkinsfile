@@ -2,8 +2,9 @@ pipeline {
     agent any
     
     tools {
-        // This ensures ALL stages use JDK 17
+        // This ensures ALL stages use JDK 17 and maven 3.9.8 (stable)
         jdk 'jdk17'
+        maven-3.9
     }
     
     options {
