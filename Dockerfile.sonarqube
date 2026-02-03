@@ -1,3 +1,3 @@
 # Save this as Dockerfile.sonarqube
 FROM sonarqube:latest
-RUN echo "sonar.webhooks.allowInternal=true" >> /opt/sonarqube/conf/sonar.properties
+RUN echo "sonar.webhooks.allowInternal=true" >> C:\sonarqube\sonarqube-10.4.1.88267\confsonar.properties
