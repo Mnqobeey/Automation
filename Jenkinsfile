@@ -176,7 +176,7 @@ pipeline {
                     // FIXED: Moved the quality gate check to the POST success block.
                     // It should run AFTER the analysis step succeeds.
                     script {
-                        timeout(time: 15, unit: 'MINUTES') {
+                        timeout(time: 5, unit: 'MINUTES') {
                             waitForQualityGate abortPipeline: true
                         }
                     }
