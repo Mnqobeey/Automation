@@ -1,0 +1,46 @@
+{
+  "cestacv_version": 1,
+  "identity": {
+    "full_name": "Automation Test Candidate",
+    "headline": "QA Automation Engineer",
+    "availability": "Immediate",
+    "region": "Johannesburg",
+    "email": "automation@example.com",
+    "phone": "0123456789",
+    "location": "Johannesburg",
+    "linkedin": "",
+    "portfolio": ""
+  },
+  "career_summary": "Automation-focused engineer validating browser workflows, structured profile generation, and recruiter-ready export flows.",
+  "skills": [
+    "Selenium",
+    "Java",
+    "Cucumber",
+    "Test Automation"
+  ],
+  "qualifications": [
+    {
+      "degree": "BSc Information Systems",
+      "institution": "Example University",
+      "year": "2024"
+    }
+  ],
+  "certifications": [
+    {
+      "cert_name": "ISTQB Foundation",
+      "provider": "ISTQB",
+      "year": "2023"
+    }
+  ],
+  "career_history": [
+    {
+      "job_title": "QA Automation Engineer",
+      "company": "CestaSoft",
+      "dates": "2024 - Present",
+      "bullets": [
+        "Built UI regression checks for critical browser flows.",
+        "Validated DOCX export readiness after review completion."
+      ]
+    }
+  ]
+}

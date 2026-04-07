@@ -1,101 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
-    <artifactId>smsc-cucumber-automation</artifactId>
+    <groupId>com.cestasoft</groupId>
+    <artifactId>cv-intelligence-automation</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>cv-intelligence-automation</name>
 
-    <!-- ================= PROPERTIES ================= -->
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <selenium.version>4.15.0</selenium.version>
+        <cucumber.version>7.15.0</cucumber.version>
+        <junit.version>5.9.2</junit.version>
+        <log4j.version>2.24.3</log4j.version>
+        <webdrivermanager.version>5.8.0</webdrivermanager.version>
     </properties>
 
-    <!-- ================= DEPENDENCIES ================= -->
     <dependencies>
-
-        <!-- Selenium -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>4.15.0</version>
+            <version>${selenium.version}</version>
         </dependency>
 
-        <!-- WebDriverManager -->
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
-            <version>5.8.0</version>
+            <version>${webdrivermanager.version}</version>
         </dependency>
 
-        <!-- JUnit 5 Platform (for JUnit 5 tests) -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- JUnit Vintage Engine (to run JUnit 4 tests like @RunWith(Cucumber.class)) -->
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>5.9.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Cucumber -->
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
-            <version>7.15.0</version>
-        </dependency>
-
-        <!-- Cucumber JUnit 4 Integration (needed for @RunWith(Cucumber.class)) -->
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-junit</artifactId>
-            <version>7.15.0</version>
+            <version>${cucumber.version}</version>
             <scope>test</scope>
         </dependency>
 
-        <!-- Log4j -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-junit</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.24.3</version>
+            <version>${log4j.version}</version>
         </dependency>
-
     </dependencies>
 
-    <!-- ================= BUILD ================= -->
     <build>
         <plugins>
-
-            <!-- Surefire (JUnit + Cucumber Runner) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M7</version>
                 <configuration>
-                    <!-- This tells Surefire to run both JUnit 4 and JUnit 5 tests -->
                     <includes>
                         <include>**/TestRunner.java</include>
-                        <include>**/*Test.java</include>
                     </includes>
-                    <!-- Force Surefire to use JUnit 4 for Cucumber tests -->
-                    <junitArtifactName>junit:junit</junitArtifactName>
-                    <testNGArtifactName>none:none</testNGArtifactName>
+                    <systemPropertyVariables>
+                        <cucumber.publish.quiet>true</cucumber.publish.quiet>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
 
-            <!-- JaCoCo -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -115,14 +104,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!-- SonarQube -->
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.10.0.2594</version>
-            </plugin>
-
         </plugins>
     </build>
 
