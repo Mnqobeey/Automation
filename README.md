@@ -1,16 +1,17 @@
-# CV Intelligence Automation Framework
+# SauceDemo Selenium Automation Framework
 
-UI automation framework for the `cv_intelligence` system using Selenium, Cucumber, Maven, and Java 17.
+BDD UI automation for the SauceDemo checkout journey using Selenium WebDriver, Cucumber, Maven, and Java.
 
 ## Scope
 
-This repository is dedicated to browser-based regression and smoke coverage for the CV Intelligence application. It is structured around the real product flow:
+This framework validates the core SauceDemo purchase flow:
 
-1. Load the application
-2. Upload a CV file or paste CV text
-3. Review extracted content
-4. Complete review when the profile is ready
-5. Export the final DOCX profile
+1. Open the SauceDemo login page.
+2. Sign in with the public demo user.
+3. Add two products to the cart.
+4. Validate the cart contents.
+5. Complete checkout.
+6. Confirm the order success message.
 
 ## Stack
 
@@ -21,58 +22,66 @@ This repository is dedicated to browser-based regression and smoke coverage for 
 - JUnit
 - WebDriverManager
 
-## Project structure
+## Project Structure
 
 ```text
-src/test/java/com/cestasoft/cvintelligence
-├─ assertions
-├─ config
-├─ hooks
-├─ pages
-├─ runners
-├─ steps
-└─ utils
+src/test/java/com/mnqobeey/saucedemo
+|-- config
+|-- core
+|-- hooks
+|-- pages
+|-- runners
+`-- steps
 
 src/test/resources
-├─ config
-├─ features
-└─ testdata
+|-- config
+|-- features
+`-- log4j2.properties
 ```
-
-## Scenarios included
-
-- Smoke: application loads successfully
-- Upload: structured CV text file can be analysed
-- Upload: structured CV text can be pasted and analysed
-- Review: review completion becomes available for valid input
-- Export: DOCX export succeeds after review completion
 
 ## Configuration
 
-Runtime configuration lives in `src/test/resources/config/test.properties`.
+Runtime settings live in `src/test/resources/config/test.properties`.
 
-Supported overrides:
+Common overrides:
 
-- `BASE_URL`
-- `BROWSER`
-- `HEADLESS`
-- `DEFAULT_TIMEOUT_SECONDS`
-- `DOWNLOAD_DIR`
+- `base.url`
+- `browser`
+- `headless`
+- `timeout.seconds`
+- `saucedemo.username`
+- `saucedemo.password`
 
-## Run locally
+Example:
+
+```bash
+mvn test -Dheadless=true
+```
+
+The default credentials are SauceDemo public test credentials, not private account credentials.
+
+## Run Locally
 
 ```bash
 mvn test
 ```
 
-To point the suite at another environment:
+Run in headless mode:
 
 ```bash
-mvn test -DBASE_URL=http://127.0.0.1:8000
+mvn test -Dheadless=true
 ```
+
+## Reports
+
+Test reports are generated under `target/`, including:
+
+- Surefire XML reports
+- Cucumber HTML report
+- Cucumber JSON report
 
 ## Notes
 
 - Chrome is the default browser.
-- The framework uses WebDriverManager to provision the driver.
-- Download assertions are designed for generated `.docx` exports.
+- WebDriverManager provisions the browser driver automatically.
+- Generated files, IDE metadata, drivers, logs, and screenshots are ignored by Git.

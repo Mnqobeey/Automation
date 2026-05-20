@@ -2,6 +2,8 @@
 target/
 logs/
 drivers/
+WinDeedData/
+screenshots/
 *.iml
 *.log
 .DS_Store
